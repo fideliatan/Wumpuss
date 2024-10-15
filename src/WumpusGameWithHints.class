@@ -1,0 +1,305 @@
+// Source code is decompiled from a .class file using FernFlower decompiler.
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.event.KeyEvent;
+import java.util.Random;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+public class WumpusGameWithHints extends JFrame {
+   private int gridSize;
+   private char[][] board;
+   private boolean[][] explored;
+   private int playerRow;
+   private int playerCol;
+   private int goldCount;
+   private String playerSprite = "sprites/player.png";
+   private String wumpusSprite = "sprites/wumpus.png";
+   private String pitSprite = "sprites/pit.png";
+   private String goldSprite = "sprites/gold.png";
+   private String emptySprite = "sprites/empty.png";
+   private JLabel[][] gridLabels;
+   private JLabel hintLabel;
+   private JLabel goldCountLabel;
+
+   public WumpusGameWithHints(int var1) {
+      this.gridSize = var1;
+      this.board = new char[var1][var1];
+      this.explored = new boolean[var1][var1];
+      this.gridLabels = new JLabel[var1][var1];
+      this.createBoard();
+      this.placeItems();
+      this.findPlayer();
+      this.setTitle("Wumpus Game with Hints");
+      this.setLayout(new BorderLayout());
+      JPanel var2 = new JPanel();
+      var2.setLayout(new GridLayout(var1, var1));
+      this.initializeGrid(var2);
+      this.add(var2, "Center");
+      JPanel var3 = new JPanel();
+      var3.setLayout(new BoxLayout(var3, 1));
+      this.hintLabel = new JLabel("Hints: ");
+      this.goldCountLabel = new JLabel("Gold Remaining: " + this.goldCount);
+      var3.add(this.hintLabel);
+      var3.add(this.goldCountLabel);
+      this.add(var3, "East");
+      this.addKeyListener(new WumpusGameWithHints$1(this));
+      this.setDefaultCloseOperation(3);
+      this.setSize(600, 512);
+      this.setResizable(false);
+      this.setVisible(true);
+      this.setFocusable(true);
+      this.setLocationRelativeTo((Component)null);
+   }
+
+   private void createBoard() {
+      for(int var1 = 0; var1 < this.gridSize; ++var1) {
+         for(int var2 = 0; var2 < this.gridSize; ++var2) {
+            this.board[var1][var2] = '-';
+            this.explored[var1][var2] = false;
+         }
+      }
+
+   }
+
+   private void placeItems() {
+      Random var1 = new Random();
+      int var2;
+      int var3;
+      if (this.gridSize == 4) {
+         var2 = 2;
+         var3 = 2;
+      } else if (this.gridSize == 8) {
+         var2 = var1.nextInt(4) + 4;
+         var3 = var1.nextInt(3) + 3;
+      } else {
+         var2 = var1.nextInt(5) + 6;
+         var3 = var1.nextInt(5) + 4;
+      }
+
+      this.board[0][0] = 'O';
+      this.explored[0][0] = true;
+      this.playerRow = 0;
+      this.playerCol = 0;
+      char[] var4 = new char[var3 + var2 + 1];
+      var4[0] = 'W';
+
+      int var5;
+      for(var5 = 1; var5 < var3 + 1; ++var5) {
+         var4[var5] = 'G';
+      }
+
+      for(var5 = var3 + 1; var5 < var4.length; ++var5) {
+         var4[var5] = 'P';
+      }
+
+      int var6;
+      int var7;
+      for(var5 = var4.length - 1; var5 > 0; --var5) {
+         var6 = var1.nextInt(var5 + 1);
+         var7 = var4[var5];
+         var4[var5] = var4[var6];
+         var4[var6] = (char)var7;
+      }
+
+      char[] var11 = var4;
+      var6 = var4.length;
+
+      for(var7 = 0; var7 < var6; ++var7) {
+         char var8 = var11[var7];
+
+         int var9;
+         int var10;
+         do {
+            do {
+               var9 = var1.nextInt(this.gridSize);
+               var10 = var1.nextInt(this.gridSize);
+            } while(this.board[var9][var10] != '-');
+         } while(var9 == 0 && var10 == 0);
+
+         this.board[var9][var10] = var8;
+      }
+
+   }
+
+   private void findPlayer() {
+      for(int var1 = 0; var1 < this.gridSize; ++var1) {
+         for(int var2 = 0; var2 < this.gridSize; ++var2) {
+            if (this.board[var1][var2] == 'O') {
+               this.playerRow = var1;
+               this.playerCol = var2;
+               return;
+            }
+         }
+      }
+
+   }
+
+   private void initializeGrid(JPanel var1) {
+      for(int var2 = 0; var2 < this.gridSize; ++var2) {
+         for(int var3 = 0; var3 < this.gridSize; ++var3) {
+            this.gridLabels[var2][var3] = new JLabel();
+            this.gridLabels[var2][var3].setHorizontalAlignment(0);
+            this.gridLabels[var2][var3].setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            var1.add(this.gridLabels[var2][var3]);
+         }
+      }
+
+      this.updateGrid();
+   }
+
+   private ImageIcon loadSprite(String var1) {
+      try {
+         ImageIcon var2 = new ImageIcon(var1);
+         Image var3 = var2.getImage().getScaledInstance(48, 48, 4);
+         return new ImageIcon(var3);
+      } catch (Exception var4) {
+         System.out.println("Could not load image: " + var1);
+         return null;
+      }
+   }
+
+   private void updateGrid() {
+      for(int var1 = 0; var1 < this.gridSize; ++var1) {
+         for(int var2 = 0; var2 < this.gridSize; ++var2) {
+            char var3 = this.board[var1][var2];
+            if (this.explored[var1][var2]) {
+               switch (var3) {
+                  case 'G':
+                     this.gridLabels[var1][var2].setIcon(this.loadSprite(this.goldSprite));
+                     break;
+                  case 'O':
+                     this.gridLabels[var1][var2].setIcon(this.loadSprite(this.playerSprite));
+                     break;
+                  case 'P':
+                     this.gridLabels[var1][var2].setIcon(this.loadSprite(this.pitSprite));
+                     break;
+                  case 'W':
+                     this.gridLabels[var1][var2].setIcon(this.loadSprite(this.wumpusSprite));
+                     break;
+                  default:
+                     this.gridLabels[var1][var2].setBackground(Color.LIGHT_GRAY);
+                     this.gridLabels[var1][var2].setOpaque(true);
+               }
+            } else {
+               this.gridLabels[var1][var2].setIcon((Icon)null);
+            }
+         }
+      }
+
+      this.revalidate();
+      this.repaint();
+   }
+
+   private void handleMovement(KeyEvent var1) {
+      int var2 = this.playerRow;
+      int var3 = this.playerCol;
+      switch (var1.getKeyCode()) {
+         case 37:
+            --var3;
+            break;
+         case 38:
+            --var2;
+            break;
+         case 39:
+            ++var3;
+            break;
+         case 40:
+            ++var2;
+      }
+
+      if (var2 >= 0 && var2 < this.gridSize && var3 >= 0 && var3 < this.gridSize && this.board[var2][var3] != 'W' && this.board[var2][var3] != 'P') {
+         if (this.board[var2][var3] == 'G') {
+            --this.goldCount;
+            this.board[var2][var3] = '-';
+         }
+
+         this.explored[var2][var3] = true;
+         this.board[this.playerRow][this.playerCol] = '-';
+         this.playerRow = var2;
+         this.playerCol = var3;
+         this.board[this.playerRow][this.playerCol] = 'O';
+         this.updateGrid();
+         this.goldCountLabel.setText("Gold Remaining: " + this.goldCount);
+         this.moveWumpus();
+         this.checkGameOver();
+      }
+
+   }
+
+   private void moveWumpus() {
+      Random var1 = new Random();
+      int var2 = -1;
+      int var3 = -1;
+
+      int var4;
+      int var5;
+      for(var4 = 0; var4 < this.gridSize; ++var4) {
+         for(var5 = 0; var5 < this.gridSize; ++var5) {
+            if (this.board[var4][var5] == 'W') {
+               var2 = var4;
+               var3 = var5;
+               break;
+            }
+         }
+      }
+
+      do {
+         do {
+            do {
+               do {
+                  do {
+                     var4 = var2;
+                     var5 = var3;
+                     int var6 = var1.nextInt(4);
+                     switch (var6) {
+                        case 0:
+                           var4 = var2 - 1;
+                           break;
+                        case 1:
+                           var4 = var2 + 1;
+                           break;
+                        case 2:
+                           var5 = var3 - 1;
+                           break;
+                        case 3:
+                           var5 = var3 + 1;
+                     }
+                  } while(var4 < 0);
+               } while(var4 >= this.gridSize);
+            } while(var5 < 0);
+         } while(var5 >= this.gridSize);
+      } while(var4 == this.playerRow && var5 == this.playerCol);
+
+      this.board[var2][var3] = '-';
+      this.board[var4][var5] = 'W';
+   }
+
+   private void checkGameOver() {
+      if (this.board[this.playerRow][this.playerCol] == 'W') {
+         JOptionPane.showMessageDialog(this, "You have been eaten by the Wumpus! Game Over!");
+         System.exit(0);
+      } else if (this.board[this.playerRow][this.playerCol] == 'P') {
+         JOptionPane.showMessageDialog(this, "You fell into a pit! Game Over!");
+         System.exit(0);
+      } else if (this.goldCount == 0) {
+         JOptionPane.showMessageDialog(this, "You collected all the gold! You win!");
+         System.exit(0);
+      }
+
+   }
+
+   public static void main(String[] var0) {
+      int var1 = Integer.parseInt(JOptionPane.showInputDialog("Enter grid size (4, 8, or 16):"));
+      new WumpusGameWithHints(var1);
+   }
+}
